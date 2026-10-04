@@ -47,5 +47,8 @@ The team tracks who is doing what and by when on a whiteboard and in chat messag
 - tests/tasks-done.test.js
 - tests/tasks-reassign.test.js
 
+## Built so far
+- Step 3: `src/auth.js` holds password hashing, validation, the cap transaction (`registerMember`), session lookup and the `originCheck`, `sessionMiddleware` and `requireLogin` middleware. `src/server.js` exports `createApp({ db })` and wires the routes `/login`, `/register`, `/logout` and `/`. Sessions live in the `sessions` table by SHA-256 of the token and expire 14 days after creation.
+
 ## Open questions
 See docs/DECISIONS.md (status: undecided).

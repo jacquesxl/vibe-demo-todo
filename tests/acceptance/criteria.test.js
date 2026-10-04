@@ -2,12 +2,29 @@
 // Later steps may only un-skip a test (and fill in its body) or add new tests.
 // Never weaken, rename or delete these. Each skip reason names the step that makes it pass.
 import { describe, test, expect } from 'vitest';
+import request from 'supertest';
+import { openDb, countUsers } from '../../src/db.js';
+import { createApp } from '../../src/server.js';
 
 const NOT_BUILT = 'acceptance test body not written yet';
+const TEAM_SIZE = 10;
 
 describe('acceptance criteria', () => {
-  test.skip('C1 [step 3] up to 10 people register and the 11th is refused', () => {
-    expect.fail(NOT_BUILT);
+  test('C1 [step 3] up to 10 people register and the 11th is refused', async () => {
+    const db = openDb(':memory:');
+    const app = createApp({ db });
+    const join = (n) =>
+      request(app)
+        .post('/register')
+        .type('form')
+        .send({ email: `person${n}@example.com`, displayName: `Person ${n}`, password: 'a long password' });
+    for (let n = 1; n <= TEAM_SIZE; n += 1) {
+      expect((await join(n)).status).toBe(303);
+    }
+    const eleventh = await join(TEAM_SIZE + 1);
+    expect(eleventh.status).toBe(409);
+    expect(eleventh.text).toContain('This team is full (10 members).');
+    expect(countUsers(db)).toBe(TEAM_SIZE);
   });
 
   test.skip('C2 [step 5] a task has title, owner and due date and can be marked done', () => {
