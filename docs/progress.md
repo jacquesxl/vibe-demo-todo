@@ -31,3 +31,9 @@ Append one entry per completed step. Newest at the bottom. Written by the agent,
 - Files touched: src/server.js, src/views.js, tests/security.test.js; also src/auth.js (`createLoginLimiter`). `createApp` takes an optional `now` clock for the throttle test; earlier tests stay green. The error handler now returns an HTML page instead of plain text.
 - Tests added: tests/security.test.js (headers, escaping, no external URLs, labels, error pages, unauthenticated refusals, throttle).
 - Open questions: HSTS and the Secure cookie flag are not set, because the decision is plain HTTP on the LAN; both need a TLS decision. The throttle is per e-mail only, so someone can lock a known e-mail out for 15 minutes; this follows the decision.
+
+## 2026-10-04, Step 9: End-to-end scenario, run instructions and backup note
+- What was done: an end-to-end test drives the app only through HTTP and the pages it returns; README explains how to start it, the `PORT` and `DATABASE_PATH` variables, backup by copying the database file (with the warning that it holds password hashes) and restore with the server stopped.
+- Files touched: tests/e2e.test.js, README.md, tests/acceptance/criteria.test.js (C5 un-skipped, body written, title unchanged; the now-unused `NOT_BUILT` constant removed so lint stays green), docs/ARCHITECTURE.md. src/server.js unchanged.
+- Tests added: tests/e2e.test.js (scenario; start with PORT and DATABASE_PATH); C5.
+- Open questions: whether the team has stopped using the whiteboard is for the founder to confirm. docs/DECISIONS.md mentions `npm run backup`, `npm run set-password` and `.env.example`; none exist and no step built them, so the README documents a plain `cp` backup instead.

@@ -6,7 +6,6 @@ import request from 'supertest';
 import { openDb, countUsers } from '../../src/db.js';
 import { createApp } from '../../src/server.js';
 
-const NOT_BUILT = 'acceptance test body not written yet';
 const TEAM_SIZE = 10;
 
 describe('acceptance criteria', () => {
@@ -97,7 +96,30 @@ describe('acceptance criteria', () => {
     expect(db.prepare('SELECT COUNT(*) AS n FROM tasks').get().n).toBe(2);
   });
 
-  test.skip('C5 [step 9] end-to-end: several members register, add, reassign, finish and reopen tasks using only the app', () => {
-    expect.fail(NOT_BUILT);
+  test('C5 [step 9] end-to-end: several members register, add, reassign, finish and reopen tasks using only the app', async () => {
+    const app = createApp({ db: openDb(':memory:') });
+    const join = async (n) => {
+      const agent = request.agent(app);
+      const res = await agent
+        .post('/register')
+        .type('form')
+        .send({ email: `crew${n}@example.com`, displayName: `Crew ${n}`, password: 'a long password' });
+      expect(res.status).toBe(303);
+      return agent;
+    };
+    const [ada, sam] = [await join(1), await join(2)];
+    await ada
+      .post('/tasks')
+      .type('form')
+      .send({ token: 'c5-token-aaaaaaaaaa', title: 'Sweep floor', owner: '1', dueDate: '2030-01-31' });
+    const row = (html) => html.match(/<li>[^<]*Sweep floor[\s\S]*?<\/li>/)[0];
+    const taskId = row((await sam.get('/')).text).match(/\/tasks\/(\d+)\//)[1];
+    await sam.post(`/tasks/${taskId}/owner`).type('form').send({ owner: '2' });
+    expect(row((await ada.get('/')).text)).toContain('Crew 2');
+    await sam.post(`/tasks/${taskId}/done`);
+    expect((await ada.get('/')).text.split('<h2>Done</h2>')[1]).toContain('Sweep floor');
+    await sam.post(`/tasks/${taskId}/reopen`);
+    expect((await ada.get('/')).text.split('<h2>Done</h2>')[0]).toContain('Sweep floor');
+    expect((await sam.post(`/tasks/${taskId}/delete`)).status).toBe(403);
   });
 });
