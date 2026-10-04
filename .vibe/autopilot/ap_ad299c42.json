@@ -1,0 +1,266 @@
+{
+  "run_id": "ap_ad299c42",
+  "created": 1791132096.2454667,
+  "status": "done",
+  "steps": [
+    {
+      "index": 0,
+      "status": "done",
+      "run_id": "run_d8e132f5eb",
+      "attempts": 2,
+      "started": 1791134773.6952627,
+      "ended": 1791134804.6387982,
+      "cost_usd": 0.598646,
+      "fixes": [
+        {
+          "attempt": 2,
+          "rule": "judge",
+          "reason": "The reviewer rejected the step: The goal says to make the files in tests/acceptance protected, and done_when says they are marked protected so later steps cannot weaken them. The only protection in the diff is a header comment in tests/acceptance/criteria.test.js (lines 1-3). The review input shows ",
+          "ts": 1791132167.4020572
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "status": "done",
+      "run_id": "run_92a73fb6fc",
+      "attempts": 2,
+      "started": 1791134811.6961272,
+      "ended": 1791134994.3378537,
+      "cost_usd": 0.5006027,
+      "fixes": [
+        {
+          "attempt": 2,
+          "rule": "finding",
+          "reason": "The guide blocked this step: Schema and module are ready; dependency approval needed before tests can run",
+          "ts": 1791134958.2346885
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "status": "done",
+      "run_id": "run_84c80f23e8",
+      "attempts": 1,
+      "started": 1791135003.9728205,
+      "ended": 1791135183.7670782,
+      "cost_usd": 0.5204171000000001
+    },
+    {
+      "index": 3,
+      "status": "done",
+      "run_id": "run_29f2429d69",
+      "attempts": 1,
+      "started": 1791135198.7270164,
+      "ended": 1791135322.255076,
+      "cost_usd": 0.40852200000000005
+    },
+    {
+      "index": 4,
+      "status": "done",
+      "run_id": "run_12e1a3b0cf",
+      "attempts": 1,
+      "started": 1791135333.486687,
+      "ended": 1791135421.3598936,
+      "cost_usd": 0.3165433
+    },
+    {
+      "index": 5,
+      "status": "done",
+      "run_id": "run_8f84b3f1f0",
+      "attempts": 1,
+      "started": 1791135431.343217,
+      "ended": 1791135502.3589468,
+      "cost_usd": 0.1984237
+    },
+    {
+      "index": 6,
+      "status": "done",
+      "run_id": "run_37f42f9e19",
+      "attempts": 3,
+      "started": 1791135511.3253105,
+      "ended": 1791135748.7596006,
+      "cost_usd": 1.6398781000000004,
+      "fixes": [
+        {
+          "attempt": 2,
+          "rule": "finding",
+          "reason": "1 critical/high finding(s) on this step: src/tasks.js: SQL built from a string",
+          "ts": 1791135634.517013
+        },
+        {
+          "attempt": 3,
+          "rule": "judge",
+          "reason": "The reviewer rejected the step: Unrequested feature: `doneRow` in src/views.js (the done-row template) adds a `reassignForm` (owner select plus Reassign button) to every done task. The step and the decisions only ask for title, owner, due date, 'done … by …' and a Reopen button on done rows, plus De",
+          "ts": 1791135695.6578307
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "status": "done",
+      "run_id": "run_04706dd669",
+      "attempts": 1,
+      "started": 1791135760.1893277,
+      "ended": 1791135884.5213954,
+      "cost_usd": 0.4299550000000001
+    },
+    {
+      "index": 8,
+      "status": "done",
+      "run_id": "run_cd369e996f",
+      "attempts": 1,
+      "started": 1791135896.8886695,
+      "ended": 1791136030.598461,
+      "cost_usd": 0.44606729999999994
+    }
+  ],
+  "config": {
+    "max_cost_usd": 8.0,
+    "commit_steps": true,
+    "max_minutes": 480,
+    "review_every": 3,
+    "trust": true,
+    "stop_on_high": true,
+    "judge": true,
+    "ask_first": true,
+    "verify_packages": true,
+    "packages_online": true
+  },
+  "cost_usd": 5.0590552,
+  "started_at": 1791132096.2454689,
+  "finished_at": 1791136039.118206,
+  "updated": 1791136039.1184702,
+  "stop": null,
+  "waiting": null,
+  "review": null,
+  "resumed": 2,
+  "log": [
+    {
+      "ts": 1791132096.245497,
+      "text": "started over steps 1–9"
+    },
+    {
+      "ts": 1791132096.2715166,
+      "text": "step 1 started"
+    },
+    {
+      "ts": 1791132167.401527,
+      "text": "judge and coder are from the same vendor; pick another judge model for an independent opinion"
+    },
+    {
+      "ts": 1791132167.40206,
+      "text": "step 1: fix attempt 2 of 3 (judge)"
+    },
+    {
+      "ts": 1791132193.5350204,
+      "text": "step 1: the coder asked 2 question(s); answer them in Decisions, then resume"
+    },
+    {
+      "ts": 1791132193.5361142,
+      "text": "paused: The coder stopped to ask before changing anything: Protection mechanism is undefined—cannot verify this step's core requirement"
+    },
+    {
+      "ts": 1791134237.6875906,
+      "text": "resumed"
+    },
+    {
+      "ts": 1791134237.711221,
+      "text": "paused: 6 product question(s) are open. Decide them in the Prompt pack panel; the autopilot never fills a blank for you."
+    },
+    {
+      "ts": 1791134773.6783621,
+      "text": "resumed"
+    },
+    {
+      "ts": 1791134773.695268,
+      "text": "step 1 started"
+    },
+    {
+      "ts": 1791134811.6807551,
+      "text": "step 1 done"
+    },
+    {
+      "ts": 1791134811.6961339,
+      "text": "step 2 started"
+    },
+    {
+      "ts": 1791134958.2346935,
+      "text": "step 2: fix attempt 2 of 3 (finding)"
+    },
+    {
+      "ts": 1791135003.94803,
+      "text": "step 2 done"
+    },
+    {
+      "ts": 1791135003.9728286,
+      "text": "step 3 started"
+    },
+    {
+      "ts": 1791135198.7100985,
+      "text": "step 3 done"
+    },
+    {
+      "ts": 1791135198.727023,
+      "text": "step 4 started"
+    },
+    {
+      "ts": 1791135333.459454,
+      "text": "step 4 done"
+    },
+    {
+      "ts": 1791135333.486695,
+      "text": "step 5 started"
+    },
+    {
+      "ts": 1791135431.3245087,
+      "text": "step 5 done"
+    },
+    {
+      "ts": 1791135431.3432229,
+      "text": "step 6 started"
+    },
+    {
+      "ts": 1791135511.307192,
+      "text": "step 6 done"
+    },
+    {
+      "ts": 1791135511.3253167,
+      "text": "step 7 started"
+    },
+    {
+      "ts": 1791135634.5170171,
+      "text": "step 7: fix attempt 2 of 3 (finding)"
+    },
+    {
+      "ts": 1791135695.657835,
+      "text": "step 7: fix attempt 3 of 3 (judge)"
+    },
+    {
+      "ts": 1791135760.1659007,
+      "text": "step 7 done"
+    },
+    {
+      "ts": 1791135760.1893318,
+      "text": "step 8 started"
+    },
+    {
+      "ts": 1791135896.8727713,
+      "text": "step 8 done"
+    },
+    {
+      "ts": 1791135896.888673,
+      "text": "step 9 started"
+    },
+    {
+      "ts": 1791136039.1010985,
+      "text": "step 9 done"
+    },
+    {
+      "ts": 1791136039.118209,
+      "text": "done"
+    }
+  ],
+  "done": 9,
+  "total": 9
+}
