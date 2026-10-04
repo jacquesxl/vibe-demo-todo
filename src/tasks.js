@@ -4,6 +4,7 @@ import { requireLogin } from './auth.js';
 import { TITLE_MAX, notFoundPage, taskListPage } from './views.js';
 
 const HTTP_BAD_REQUEST = 400;
+const HTTP_FORBIDDEN = 403;
 const HTTP_NOT_FOUND = 404;
 const HTTP_SEE_OTHER = 303;
 const TOKEN_BYTES = 16;
@@ -16,6 +17,7 @@ const MSG_TITLE = 'Title is required.';
 const MSG_DUE_DATE = 'Due date must be a calendar date (YYYY-MM-DD).';
 const MSG_OWNER = 'Owner must be a member.';
 const MSG_BAD_FORM = 'Bad request.';
+const MSG_NOT_CREATOR = 'Only the person who added this task can delete it.';
 
 function pad(n) {
   return String(n).padStart(2, '0');
@@ -49,17 +51,43 @@ export function listMembers(db) {
   return memberLabels(users);
 }
 
-export function listOpenTasks(db) {
+// Open tasks: soonest due date first, no due date last, ties oldest first.
+const OPEN_ORDER_SQL = 'ORDER BY t.due_date IS NULL, t.due_date, t.created_at, t.id';
+// The one place that orders done tasks: newest completion first (the founder has not settled this yet).
+const DONE_ORDER_SQL = 'ORDER BY t.completed_at DESC, t.id DESC';
+
+const TASK_COLUMNS = `t.id, t.title, t.owner_id, t.created_by, t.due_date, t.completed_at,
+  o.display_name AS owner_name, c.display_name AS creator_name, d.display_name AS completer_name`;
+
+function listTasks(db, done, orderSql) {
   return db
     .prepare(
-      `SELECT t.id, t.title, t.owner_id, t.due_date, o.display_name AS owner_name, c.display_name AS creator_name
+      `SELECT ${TASK_COLUMNS}
        FROM tasks t
        JOIN users o ON o.id = t.owner_id
        JOIN users c ON c.id = t.created_by
-       WHERE t.done = 0
-       ORDER BY t.id`,
+       LEFT JOIN users d ON d.id = t.completed_by
+       WHERE t.done = ?
+       ${orderSql}`,
     )
-    .all();
+    .all(done);
+}
+
+export function listOpenTasks(db) {
+  return listTasks(db, 0, OPEN_ORDER_SQL);
+}
+
+// completed_at is stored in UTC; the label is the server's local time as YYYY-MM-DD HH:MM.
+function localDateTime(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export function listDoneTasks(db) {
+  return listTasks(db, 1, DONE_ORDER_SQL).map((t) => ({
+    ...t,
+    done_label: t.completed_at ? localDateTime(t.completed_at) : null,
+  }));
 }
 
 // Returns { values, errors }. values.owner is a member id, or null when it is not one.
@@ -122,6 +150,22 @@ export function reassignTask(db, id, ownerId) {
   return run.immediate();
 }
 
+export const DELETE_DELETED = 'deleted';
+export const DELETE_FORBIDDEN = 'forbidden';
+
+// Only the creator may delete. The check and the delete are one transaction. A task that is
+// already gone counts as deleted, so a repeated submit answers the same as the first.
+export function deleteTask(db, id, userId) {
+  const run = db.transaction(() => {
+    const task = findTask(db, id);
+    if (task === undefined) return DELETE_DELETED;
+    if (task.created_by !== userId) return DELETE_FORBIDDEN;
+    db.prepare('DELETE FROM tasks WHERE id = ? AND created_by = ?').run(id, userId);
+    return DELETE_DELETED;
+  });
+  return run.immediate();
+}
+
 function changeState(db, change) {
   return (req, res) => {
     const found = ID_PATTERN.test(req.params.id) && change(Number(req.params.id), req.user.id);
@@ -137,6 +181,7 @@ function renderList(db, req, { errors = [], values = {}, status = 200 } = {}, re
     user: req.user,
     members: listMembers(db),
     tasks: listOpenTasks(db),
+    doneTasks: listDoneTasks(db),
     today: localToday(),
     token,
     errors,
@@ -182,4 +227,12 @@ export function taskRoutes(app, db) {
 
   app.post('/tasks/:id/done', requireLogin, changeState(db, (id, userId) => markDone(db, id, userId)));
   app.post('/tasks/:id/reopen', requireLogin, changeState(db, (id) => reopenTask(db, id)));
+
+  app.post('/tasks/:id/delete', requireLogin, (req, res) => {
+    if (!ID_PATTERN.test(req.params.id)) return res.status(HTTP_NOT_FOUND).send(notFoundPage());
+    if (deleteTask(db, Number(req.params.id), req.user.id) === DELETE_FORBIDDEN) {
+      return renderList(db, req, { errors: [MSG_NOT_CREATOR], status: HTTP_FORBIDDEN }, res);
+    }
+    return res.redirect(HTTP_SEE_OTHER, '/');
+  });
 }

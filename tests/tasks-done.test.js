@@ -52,7 +52,7 @@ describe('mark done', () => {
     const id = await addTask(a, 'Gone soon');
     await a.post(`/tasks/${id}/done`);
     const list = await a.get('/');
-    expect(list.text).not.toContain('Gone soon');
+    expect(list.text.split('<h2>Done</h2>')[0]).not.toContain('Gone soon');
   });
 
   test('the open list offers a Mark done button', async () => {

@@ -19,3 +19,9 @@ Append one entry per completed step. Newest at the bottom. Written by the agent,
 - Files touched: src/tasks.js, src/views.js, tests/tasks-done.test.js, tests/acceptance/criteria.test.js (C2 un-skipped); also src/schema.sql (new `tasks.completed_by` column) and src/db.js (`applySchema` adds the column to an existing database file); step 2 to 4 tests stay green.
 - Tests added: tests/tasks-done.test.js (done, double submit, reopen, 404, no session, foreign Origin); C2.
 - Open questions: the 'Reopen' button has no place on the page until step 7 adds the Done section; the route and tests exist now.
+
+## 2026-10-04, Step 7: Done section, ordering and delete by creator
+- What was done: `GET /` shows open tasks (soonest due first, no due date last, ties oldest first) and an always-present 'Done' section (newest completion first; 'Nothing done yet.' when empty) whose rows have Reassign, Reopen and, for the creator, Delete. `POST /tasks/:id/delete` lets only the creator delete (open or done); anyone else gets 403 'Only the person who added this task can delete it.' above the list and the task stays. Deleting an already deleted task redirects like the first time; a malformed id is 404.
+- Files touched: src/tasks.js, src/views.js, tests/tasks-done-list.test.js, tests/tasks-delete.test.js, tests/acceptance/criteria.test.js (C4 un-skipped, body written, title unchanged); also tests/tasks-done.test.js: one step 5 assertion ('a done task leaves the open list') now checks only the part of the page above the Done heading, because done tasks now appear in the Done section.
+- Tests added: tests/tasks-done-list.test.js, tests/tasks-delete.test.js; C4.
+- Open questions: 'newest first' by completion time is still the founder's call (kept in `DONE_ORDER_SQL`); C4's title says step 8 but it is un-skipped here as the step instructs.

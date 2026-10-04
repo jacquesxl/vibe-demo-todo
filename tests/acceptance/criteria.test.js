@@ -68,8 +68,33 @@ describe('acceptance criteria', () => {
     expect(db.prepare('SELECT owner_id FROM tasks WHERE id = ?').get(id).owner_id).toBe(2);
   });
 
-  test.skip('C4 [step 8] done tasks are listed apart from open ones, newest first, can be reopened, and only the creator can delete', () => {
-    expect.fail(NOT_BUILT);
+  test('C4 [step 8] done tasks are listed apart from open ones, newest first, can be reopened, and only the creator can delete', async () => {
+    const db = openDb(':memory:');
+    const app = createApp({ db });
+    const ada = request.agent(app);
+    const sam = request.agent(app);
+    await ada.post('/register').type('form').send({ email: 'ada@example.com', displayName: 'Ada', password: 'a long password' });
+    await sam.post('/register').type('form').send({ email: 'sam@example.com', displayName: 'Sam', password: 'a long password' });
+    for (const [n, title] of [['1', 'Older'], ['2', 'Newer'], ['3', 'Open one']]) {
+      await ada.post('/tasks').type('form').send({ token: `c4-token-aaaaaaaaaa${n}`, title, owner: '1', dueDate: '2030-01-31' });
+    }
+    const id = (title) => db.prepare('SELECT id FROM tasks WHERE title = ?').get(title).id;
+    await ada.post(`/tasks/${id('Older')}/done`);
+    await ada.post(`/tasks/${id('Newer')}/done`);
+    db.prepare('UPDATE tasks SET completed_at = ? WHERE title = ?').run('2030-01-01T10:00:00.000Z', 'Older');
+    db.prepare('UPDATE tasks SET completed_at = ? WHERE title = ?').run('2030-01-02T10:00:00.000Z', 'Newer');
+    const [open, done] = (await ada.get('/')).text.split('<h2>Done</h2>');
+    expect(open).toContain('Open one');
+    expect(open).not.toContain('Newer');
+    expect(done.indexOf('Newer')).toBeGreaterThan(-1);
+    expect(done.indexOf('Newer')).toBeLessThan(done.indexOf('Older'));
+    await ada.post(`/tasks/${id('Newer')}/reopen`);
+    expect(db.prepare('SELECT done FROM tasks WHERE title = ?').get('Newer').done).toBe(0);
+    const refused = await sam.post(`/tasks/${id('Older')}/delete`);
+    expect(refused.status).toBe(403);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM tasks').get().n).toBe(3);
+    expect((await ada.post(`/tasks/${id('Older')}/delete`)).status).toBe(303);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM tasks').get().n).toBe(2);
   });
 
   test.skip('C5 [step 9] end-to-end: several members register, add, reassign, finish and reopen tasks using only the app', () => {

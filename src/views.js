@@ -4,6 +4,8 @@ const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&
 
 export const MSG_EMPTY_LIST = 'No tasks yet. Add the first one above.';
 
+export const MSG_EMPTY_DONE = 'Nothing done yet.';
+
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (ch) => ESCAPES[ch]);
 }
@@ -52,29 +54,51 @@ ${ownerOptions(members, task.owner_id)}
 </select> <button type="submit">Reassign</button></form>`;
 }
 
-function taskRow(task, today, members) {
+function actionForm(task, action, label) {
+  return `<form method="post" action="/tasks/${Number(task.id)}/${action}"><button type="submit">${label}</button></form>`;
+}
+
+// The button is only a convenience: the server refuses anyone but the creator.
+function deleteForm(task, userId) {
+  return task.created_by === userId ? ` ${actionForm(task, 'delete', 'Delete')}` : '';
+}
+
+function taskRow(task, today, members, userId) {
   const due = task.due_date ? esc(task.due_date) : 'no due date';
   const overdue = task.due_date && task.due_date < today ? ' <strong>overdue</strong>' : '';
-  const doneForm = `<form method="post" action="/tasks/${Number(task.id)}/done"><button type="submit">Mark done</button></form>`;
-  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due}${overdue} &middot; added by ${esc(task.creator_name)} ${reassignForm(task, members)} ${doneForm}</li>`;
+  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due}${overdue} &middot; added by ${esc(task.creator_name)} ${reassignForm(task, members)} ${actionForm(task, 'done', 'Mark done')}${deleteForm(task, userId)}</li>`;
+}
+
+function doneRow(task, members, userId) {
+  const due = task.due_date ? esc(task.due_date) : 'no due date';
+  const when = task.done_label ? `done ${esc(task.done_label)}` : 'done';
+  const by = task.completer_name ? ` by ${esc(task.completer_name)}` : '';
+  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due} &middot; ${when}${by} ${reassignForm(task, members)} ${actionForm(task, 'reopen', 'Reopen')}${deleteForm(task, userId)}</li>`;
 }
 
 export function notFoundPage() {
   return page('Not found', '<p>Task not found.</p>\n<p><a href="/">Back to the list</a></p>');
 }
 
-function taskList(tasks, today, members) {
+function taskList(tasks, today, members, userId) {
   if (tasks.length === 0) return `<p>${esc(MSG_EMPTY_LIST)}</p>`;
-  return `<ul>\n${tasks.map((task) => taskRow(task, today, members)).join('\n')}\n</ul>`;
+  return `<ul>\n${tasks.map((task) => taskRow(task, today, members, userId)).join('\n')}\n</ul>`;
 }
 
-export function taskListPage({ user, members, tasks, today, token, errors = [], values }) {
+function doneList(tasks, members, userId) {
+  if (tasks.length === 0) return `<p>${esc(MSG_EMPTY_DONE)}</p>`;
+  return `<ul>\n${tasks.map((task) => doneRow(task, members, userId)).join('\n')}\n</ul>`;
+}
+
+export function taskListPage({ user, members, tasks, doneTasks, today, token, errors = [], values }) {
   return page(
     'Tasks',
     `<p>Logged in as ${esc(user.display_name)}.</p>
 <form method="post" action="/logout"><button type="submit">Log out</button></form>
 ${messages(errors)}
 ${addForm({ members, values, token })}
-${taskList(tasks, today, members)}`,
+${taskList(tasks, today, members, user.id)}
+<h2>Done</h2>
+${doneList(doneTasks, members, user.id)}`,
   );
 }
