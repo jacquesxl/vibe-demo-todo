@@ -1,0 +1,44 @@
+{
+  "chat": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-5-5"
+  },
+  "review": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-5-5"
+  },
+  "aux": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5-20251001"
+  },
+  "prefer_free": false,
+  "fallback": {
+    "provider": "ollama",
+    "model": ""
+  },
+  "ladder": {
+    "enabled": true,
+    "cheap": {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5-20251001"
+    },
+    "standard": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5"
+    },
+    "strong": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5"
+    }
+  },
+  "prices": {
+    "claude-haiku-4-5-20251001": [
+      1,
+      5
+    ],
+    "claude-sonnet-5-5": [
+      2,
+      10
+    ]
+  }
+}

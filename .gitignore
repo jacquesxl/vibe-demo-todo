@@ -1,0 +1,47 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*
+secrets*
+# AI agent state (transcripts, local settings)
+.claude/sessions/
+.claude/settings.local.json
+.codex/sessions/
+.cursor/sessions/
+# dependencies and build
+node_modules/
+.venv/
+venv/
+__pycache__/
+dist/
+build/
+.next/
+out/
+coverage/
+# logs and dumps
+*.log
+# database dumps only: schema and migration .sql files are source code and stay tracked (second real run: a blanket *.sql hid src/schema.sql from the reviewer)
+*.dump.sql
+*.sql.gz
+dump*.sql
+*.bak
+*.dump
+backup/
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+# vibe agent local state (keep events.jsonl, decisions and gates tracked)
+.vibe/server.token
+.vibe/vault.enc
+.vibe/vault-index.json
+.vibe/runs/
+.vibe/worktrees/
+.vibe/usage.jsonl
+.vibe/guide.json
+.vibe/pentest/
+.vibe/deps-snapshot.json

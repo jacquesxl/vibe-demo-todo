@@ -1,0 +1,163 @@
+version: 1
+tier: 1
+coder: claude
+phases:
+  problem:
+    require:
+    - sections.filled:
+        docs/PRD.md:
+        - Who is this for
+        - What problem exists today
+        - What must be true
+        - Explicitly out of scope
+    - phase.confirmed: problem
+  decide:
+    require:
+    - decisions.undecided == 0
+    - decisions.total >= 1
+  architect:
+    require:
+    - files.exist:
+      - docs/tech-stack.md
+      - docs/ARCHITECTURE.md
+      - docs/implementation-plan.md
+  build:
+    require:
+    - decisions.undecided == 0
+    - files.exist:
+      - docs/ARCHITECTURE.md
+      - docs/implementation-plan.md
+    chain:
+    - build
+    - lint
+    - typecheck
+    - test
+    max_fix_attempts: 3
+  verify:
+    require:
+    - scan.fail == 0
+    - audit.critical == 0
+    - verify.report_present
+  ship:
+    require:
+    - checklist.ship_gate.tier_complete
+    - signoff.present
+commands:
+  build: ''
+  lint: npm run lint
+  typecheck: ''
+  test: npm test
+  dev: npm start
+preview:
+  enabled: true
+  url: http://127.0.0.1:3000
+  wait_seconds: 40
+  env:
+    SESSION_SECRET: dev-only-not-a-secret
+protected:
+  deny_writes: false
+wrapup: auto
+sandbox:
+  worktree: false
+limits:
+  runs_per_hour: 30
+  cost_usd_per_day: 20.0
+  max_turns_per_run: 60
+  max_run_minutes: 30
+  cost_usd_per_run: 2.0
+  api_requests_per_minute: 300
+  max_parallel_agents: 3
+notify:
+  'on':
+  - stopped
+  - paused
+  - done
+  - failed
+  - review
+  - approval
+  desktop: false
+  public_url: http://127.0.0.1:8700
+autopilot:
+  max_cost_usd: 8
+  max_minutes: 480
+  review_every: 3
+  trust: false
+  stop_on_high: true
+  judge: true
+  verify_packages: true
+  packages_online: true
+  ask_first: true
+  commit_steps: true
+dependencies:
+  min_weekly_downloads: 1000
+  min_age_days: 7
+coder_models:
+  claude:
+    cheap: haiku
+    standard: sonnet
+    strong: sonnet
+  codex:
+    cheap: ''
+    standard: ''
+    strong: ''
+policy:
+  deny:
+  - rm -rf *
+  - git push --force*
+  - git push -f*
+  - git commit --no-verify*
+  - git commit -n*
+  - curl * | sh*
+  - curl * | bash*
+  - wget * | sh*
+  - 'read: **/.env'
+  - 'read: **/.env.local'
+  - 'read: **/.env.*.local'
+  - 'read: **/.env.production'
+  - 'read: **/.env.development'
+  - 'read: **/.env.staging'
+  - 'read: **/.env.test'
+  - 'read: **/credentials*'
+  - 'read: **/*.pem'
+  - 'read: **/.vibe/vault*'
+  - 'read: **/.vibe/server.token'
+  approve:
+  - (npm|pnpm|yarn|bun|pip|pip3|uv|poetry) (i|install|add)*
+  - git push*
+  - '* deploy*'
+  - DROP TABLE*
+  - TRUNCATE *
+  - DELETE FROM *
+  coder:
+    claude:
+      permission_mode: dontAsk
+      allowed_tools:
+      - Read
+      - Edit
+      - Write
+      - Grep
+      - Glob
+      - Bash(ls)
+      - Bash(ls *)
+      - Bash(pwd)
+      - Bash(cat *)
+      - Bash(head *)
+      - Bash(tail *)
+      - Bash(wc *)
+      - Bash(echo *)
+      - Bash(mkdir *)
+      - Bash(touch *)
+      - Bash(cp *)
+      - Bash(mv *)
+      - Bash(cd *)
+      - Bash(git status*)
+      - Bash(git diff*)
+      - Bash(git log*)
+      - Bash(git add *)
+      - Bash(git commit *)
+      - Bash(git branch*)
+      - Bash(git checkout -b *)
+      max_turns: 60
+    codex:
+      sandbox: workspace-write
+      network_access: false
