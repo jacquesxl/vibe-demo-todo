@@ -1,0 +1,16 @@
+{
+  "name": "team-todo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "To-do list for one team: title, owner, due date, done.",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "10.12.0",
+    "vitest": "5.0.3"
+  }
+}
