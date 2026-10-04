@@ -102,6 +102,33 @@ export function registerMember(db, { email, displayName, passwordHash, tokenHash
   return run.immediate();
 }
 
+export const LOGIN_MAX_FAILURES = 5;
+export const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+// Failed logins per e-mail, kept in memory only (gone on restart). The 5th failure inside the
+// window blocks that e-mail for the window length; a success clears the record.
+export function createLoginLimiter(now = Date.now) {
+  const entries = new Map();
+  const isExpired = (entry, t) => entry.blockedUntil <= t && t - entry.windowStart >= LOGIN_WINDOW_MS;
+  return {
+    isBlocked(email) {
+      const entry = entries.get(email);
+      return entry !== undefined && entry.blockedUntil > now();
+    },
+    recordFailure(email) {
+      const t = now();
+      for (const [key, entry] of entries) if (isExpired(entry, t)) entries.delete(key);
+      const entry = entries.get(email) ?? { count: 0, windowStart: t, blockedUntil: 0 };
+      entry.count += 1;
+      if (entry.count >= LOGIN_MAX_FAILURES) entry.blockedUntil = t + LOGIN_WINDOW_MS;
+      entries.set(email, entry);
+    },
+    clear(email) {
+      entries.delete(email);
+    },
+  };
+}
+
 export async function checkLogin(db, email, password) {
   const user = findUserByEmail(db, email);
   const valid = await verifyPassword(password, user ? user.password_hash : await getDummyHash());

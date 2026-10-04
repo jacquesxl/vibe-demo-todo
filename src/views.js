@@ -80,6 +80,14 @@ export function notFoundPage() {
   return page('Not found', '<p>Task not found.</p>\n<p><a href="/">Back to the list</a></p>');
 }
 
+export function unknownPage() {
+  return page('Not found', '<p>Page not found.</p>\n<p><a href="/">Back to the list</a></p>');
+}
+
+export function failurePage(text) {
+  return page('Error', `<p>${esc(text)}</p>\n<p><a href="/">Back to the list</a></p>`);
+}
+
 function taskList(tasks, today, members, userId) {
   if (tasks.length === 0) return `<p>${esc(MSG_EMPTY_LIST)}</p>`;
   return `<ul>\n${tasks.map((task) => taskRow(task, today, members, userId)).join('\n')}\n</ul>`;
