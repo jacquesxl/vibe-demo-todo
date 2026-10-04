@@ -49,6 +49,7 @@ The team tracks who is doing what and by when on a whiteboard and in chat messag
 
 ## Built so far
 - Step 3: `src/auth.js` holds password hashing, validation, the cap transaction (`registerMember`), session lookup and the `originCheck`, `sessionMiddleware` and `requireLogin` middleware. `src/server.js` exports `createApp({ db })` and wires the routes `/login`, `/register`, `/logout` and `/`. Sessions live in the `sessions` table by SHA-256 of the token and expire 14 days after creation.
+- Step 4: `src/tasks.js` holds the task list queries, the new-task validation (`validateNewTask`), the one-transaction add with its form token (`addTaskOnce`) and the routes `GET /` and `POST /tasks`, both behind `requireLogin`. `src/views.js` holds the HTML helpers (`esc`, `page`, `messages`, moved out of `src/server.js`) and the task list page. `src/schema.sql` gained the `form_tokens` table (user_id, token, created_at) used to ignore a repeated submit within 10 minutes.
 
 ## Open questions
 See docs/DECISIONS.md (status: undecided).

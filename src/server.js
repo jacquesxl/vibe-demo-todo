@@ -18,11 +18,12 @@ import {
   normalizeEmail,
   originCheck,
   registerMember,
-  requireLogin,
   sessionMiddleware,
   startSession,
   validateRegistration,
 } from './auth.js';
+import { taskRoutes } from './tasks.js';
+import { esc, messages, page } from './views.js';
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_DB_PATH = 'data/tasks.db';
@@ -38,29 +39,6 @@ const MSG_FULL = `This team is full (${TEAM_LIMIT} members).`;
 const MSG_LOGGED_OUT = 'You are logged out.';
 const MSG_FAILURE = 'Something went wrong. Nothing was saved.';
 const MSG_BAD_REQUEST = 'Bad request.';
-
-const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-
-function esc(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => ESCAPES[ch]);
-}
-
-function page(title, body) {
-  return `<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title></head>
-<body>
-<main>
-<h1>${esc(title)}</h1>
-${body}
-</main>
-</body>
-</html>`;
-}
-
-function messages(list, role = 'alert') {
-  return list.map((text) => `<p role="${role}">${esc(text)}</p>`).join('\n');
-}
 
 function loginPage({ notes = [], errors = [], email = '' } = {}) {
   return page(
@@ -91,14 +69,6 @@ function registerPage({ errors = [], email = '', displayName = '' } = {}) {
 
 function fullPage() {
   return page('Register', `${messages([MSG_FULL])}<p><a href="/login">Log in</a></p>`);
-}
-
-function homePage(user) {
-  return page(
-    'Tasks',
-    `<p>Logged in as ${esc(user.display_name)}.</p>
-<form method="post" action="/logout"><button type="submit">Log out</button></form>`,
-  );
 }
 
 function loginSuccess(db, res, userId) {
@@ -153,8 +123,6 @@ function authRoutes(app, db) {
     res.clearCookie(SESSION_COOKIE, COOKIE_OPTIONS);
     res.redirect(HTTP_SEE_OTHER, '/login?loggedout=1');
   });
-
-  app.get('/', requireLogin, (req, res) => res.send(homePage(req.user)));
 }
 
 // Logs the detail on the server only; the client gets a fixed sentence.
@@ -173,6 +141,7 @@ export function createApp({ db }) {
   app.use(cookieParser());
   app.use(sessionMiddleware(db));
   authRoutes(app, db);
+  taskRoutes(app, db);
   app.use(errorHandler);
   return app;
 }

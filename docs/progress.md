@@ -7,3 +7,9 @@ Append one entry per completed step. Newest at the bottom. Written by the agent,
 - Files touched: src/auth.js, src/server.js, tests/auth.test.js, tests/acceptance/criteria.test.js (C1 un-skipped), package.json and package-lock.json (express 5.2.1, cookie-parser 1.4.7, supertest 7.3.1, exact pins)
 - Tests added: tests/auth.test.js (register, login, wrong password, logout, cap, concurrent last place, duplicate e-mail, validation, Origin check); C1.
 - Open questions: wording and status of validation errors on the register form are UNDECIDED (placeholder sentences, HTTP 400); sessions expire 14 days after login, not sliding, because sliding needs a new column in sessions.
+
+## 2026-10-04, Step 4: Shared task list and add task
+- What was done: `GET /` shows the open tasks (title, owner name, due date or 'no due date', 'overdue', 'added by <creator>') and the add form (title, owner picker with the logged-in member preselected, due date). `POST /tasks` validates on the server, takes the creator from the session, and adds the task in one transaction together with the claim of the form token.
+- Files touched: src/tasks.js, src/views.js, tests/tasks-create.test.js; also src/server.js (routes wired, `esc`/`page`/`messages` moved to views.js) and src/schema.sql (new `form_tokens` table); step 3 tests stay green.
+- Tests added: tests/tasks-create.test.js (shared list, creator from session, preselect, validation refusals, escaping, duplicate submit, token expiry, no session).
+- Open questions: empty-state wording is still UNDECIDED (placeholder 'No tasks yet. Add the first one above.'); the answer to a POST with a missing or malformed form token (plain 400 'Bad request.') was not decided; open tasks are listed in creation order until step 7 sets the order.

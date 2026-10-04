@@ -23,5 +23,13 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
+-- One row per add-task form submission, so a repeated submit of the same form is recognised.
+CREATE TABLE IF NOT EXISTS form_tokens (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  token TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  PRIMARY KEY (user_id, token)
+);
+
 CREATE INDEX IF NOT EXISTS tasks_owner_id ON tasks (owner_id);
 CREATE INDEX IF NOT EXISTS sessions_user_id ON sessions (user_id);
