@@ -217,3 +217,5 @@
 {"ts": 1791136030.5908985, "type": "guide_step_done", "actor": "guide", "payload": {"index": 8, "status": "completed", "advice": "ok"}, "prev": "b87ce6aa07a744b9", "hash": "a8acd9bcd9497867"}
 {"ts": 1791136039.0940304, "type": "guide_step_judged", "actor": "judge", "payload": {"index": 8, "verdict": "accept", "same_vendor": true}, "prev": "a8acd9bcd9497867", "hash": "0feb1ca9c8879151"}
 {"ts": 1791136039.118321, "type": "autopilot_done", "actor": "autopilot", "payload": {"run_id": "ap_ad299c42", "stop": null, "cost_usd": 5.0591}, "prev": "0feb1ca9c8879151", "hash": "25a5ae2800da51cf"}
+{"ts": 1791136677.5121148, "type": "shipped_to_github", "actor": "guide", "payload": {"repo": "jacquesxl/vibe-demo-todo", "branch": "feature/demo", "created": false}, "prev": "25a5ae2800da51cf", "hash": "e192cf97cc9870d3"}
+{"ts": 1791136809.4857762, "type": "vault_seeded", "actor": "server", "payload": {"providers": ["anthropic", "github"]}, "prev": "e192cf97cc9870d3", "hash": "6b271003145d194e"}
