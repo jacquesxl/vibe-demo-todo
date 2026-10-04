@@ -1,0 +1,11 @@
+{
+  "steps": {
+    "build": "not configured",
+    "lint": "passed",
+    "typecheck": "not configured",
+    "test": "passed"
+  },
+  "failed": 0,
+  "failed_steps": [],
+  "ts": 1791136015.3009357
+}

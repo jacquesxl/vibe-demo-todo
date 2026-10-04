@@ -1,0 +1,22 @@
+{
+  "name": "team-todo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "To-do list for one team: title, owner, due date, done.",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "10.12.0",
+    "supertest": "7.3.1",
+    "vitest": "5.0.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "cookie-parser": "1.4.7",
+    "express": "5.2.1"
+  }
+}

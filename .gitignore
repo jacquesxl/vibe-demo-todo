@@ -21,6 +21,11 @@ build/
 .next/
 out/
 coverage/
+# local database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 # logs and dumps
 *.log
 # database dumps only: schema and migration .sql files are source code and stay tracked (second real run: a blanket *.sql hid src/schema.sql from the reviewer)

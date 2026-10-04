@@ -1,0 +1,14 @@
+{
+  "files": {
+    "tests/acceptance/criteria.test.js": {
+      "accepted": 1791136015.3047788,
+      "asserts": 25,
+      "by": "guide",
+      "sha256": "170952eaaed4551a6e0c58232863af75057a069073bba6b659b1f5aa6a122260",
+      "since": 1791134797.30655,
+      "skips": 0,
+      "tests": 6
+    }
+  },
+  "version": 1
+}

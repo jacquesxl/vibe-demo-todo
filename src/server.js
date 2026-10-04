@@ -1,0 +1,189 @@
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { countUsers, openDb } from './db.js';
+import {
+  COOKIE_OPTIONS,
+  EMAIL_MAX,
+  NAME_MAX,
+  PASSWORD_MAX,
+  SESSION_COOKIE,
+  TEAM_LIMIT,
+  checkLogin,
+  createLoginLimiter,
+  endSession,
+  hashPassword,
+  newToken,
+  normalizeEmail,
+  originCheck,
+  registerMember,
+  sessionMiddleware,
+  startSession,
+  validateRegistration,
+} from './auth.js';
+import { taskRoutes } from './tasks.js';
+import { esc, failurePage, messages, page, unknownPage } from './views.js';
+
+const DEFAULT_PORT = 3000;
+const DEFAULT_DB_PATH = 'data/tasks.db';
+const BODY_LIMIT = '10kb';
+const HTTP_BAD_REQUEST = 400;
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_NOT_FOUND = 404;
+const HTTP_CONFLICT = 409;
+const HTTP_TOO_MANY = 429;
+const HTTP_SEE_OTHER = 303;
+const CSP = "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+
+const MSG_DUPLICATE = 'An account with this e-mail already exists.';
+const MSG_BAD_LOGIN = 'Wrong e-mail or password.';
+const MSG_FULL = `This team is full (${TEAM_LIMIT} members).`;
+const MSG_LOGGED_OUT = 'You are logged out.';
+const MSG_FAILURE = 'Something went wrong. Nothing was saved.';
+const MSG_BAD_REQUEST = 'Bad request.';
+const MSG_TOO_MANY = 'Too many attempts. Try again in 15 minutes.';
+
+function loginPage({ notes = [], errors = [], email = '' } = {}) {
+  return page(
+    'Log in',
+    `${messages(notes, 'status')}${messages(errors)}
+<form method="post" action="/login">
+<p><label>E-mail <input type="email" name="email" value="${esc(email)}" maxlength="${EMAIL_MAX}" required autocomplete="username"></label></p>
+<p><label>Password <input type="password" name="password" maxlength="${PASSWORD_MAX}" required autocomplete="current-password"></label></p>
+<p><button type="submit">Log in</button></p>
+</form>
+<p><a href="/register">Register</a></p>`,
+  );
+}
+
+function registerPage({ errors = [], email = '', displayName = '' } = {}) {
+  return page(
+    'Register',
+    `${messages(errors)}
+<form method="post" action="/register">
+<p><label>Name <input type="text" name="displayName" value="${esc(displayName)}" maxlength="${NAME_MAX}" required></label></p>
+<p><label>E-mail <input type="email" name="email" value="${esc(email)}" maxlength="${EMAIL_MAX}" required autocomplete="username"></label></p>
+<p><label>Password <input type="password" name="password" maxlength="${PASSWORD_MAX}" required autocomplete="new-password"></label></p>
+<p><button type="submit">Register</button></p>
+</form>
+<p><a href="/login">Log in</a></p>`,
+  );
+}
+
+function fullPage() {
+  return page('Register', `${messages([MSG_FULL])}<p><a href="/login">Log in</a></p>`);
+}
+
+function loginSuccess(db, res, userId) {
+  res.cookie(SESSION_COOKIE, startSession(db, userId), COOKIE_OPTIONS);
+  res.redirect(HTTP_SEE_OTHER, '/');
+}
+
+function loginHandler(db, limiter) {
+  return async (req, res) => {
+    const body = req.body ?? {};
+    const email = normalizeEmail(body.email);
+    const password = typeof body.password === 'string' ? body.password : '';
+    const emailOk = email.length > 0 && email.length <= EMAIL_MAX;
+    if (emailOk && limiter.isBlocked(email)) {
+      return res.status(HTTP_TOO_MANY).send(loginPage({ errors: [MSG_TOO_MANY], email }));
+    }
+    const user = emailOk && password.length <= PASSWORD_MAX ? await checkLogin(db, email, password) : null;
+    if (!user) {
+      if (emailOk) limiter.recordFailure(email);
+      return res.status(HTTP_UNAUTHORIZED).send(loginPage({ errors: [MSG_BAD_LOGIN], email }));
+    }
+    limiter.clear(email);
+    return loginSuccess(db, res, user.id);
+  };
+}
+
+function authRoutes(app, db, limiter) {
+  app.get('/login', (req, res) => {
+    if (req.user) return res.redirect('/');
+    const notes = req.query.loggedout === '1' ? [MSG_LOGGED_OUT] : [];
+    return res.send(loginPage({ notes }));
+  });
+
+  app.post('/login', loginHandler(db, limiter));
+
+  app.get('/register', (req, res) => {
+    if (req.user) return res.redirect('/');
+    return res.send(countUsers(db) >= TEAM_LIMIT ? fullPage() : registerPage());
+  });
+
+  app.post('/register', async (req, res) => {
+    if (req.user) return res.redirect(HTTP_SEE_OTHER, '/');
+    const { values, errors } = validateRegistration(req.body ?? {});
+    if (errors.length > 0) {
+      return res.status(HTTP_BAD_REQUEST).send(registerPage({ ...values, errors }));
+    }
+    const { token, tokenHash } = newToken();
+    const passwordHash = await hashPassword(values.password);
+    const result = registerMember(db, { ...values, passwordHash, tokenHash });
+    if (result.error === 'full') return res.status(HTTP_CONFLICT).send(fullPage());
+    if (result.error === 'duplicate') {
+      return res.status(HTTP_CONFLICT).send(registerPage({ ...values, errors: [MSG_DUPLICATE] }));
+    }
+    res.cookie(SESSION_COOKIE, token, COOKIE_OPTIONS);
+    return res.redirect(HTTP_SEE_OTHER, '/');
+  });
+
+  app.post('/logout', (req, res) => {
+    const token = req.cookies?.[SESSION_COOKIE];
+    if (typeof token === 'string' && token) endSession(db, token);
+    res.clearCookie(SESSION_COOKIE, COOKIE_OPTIONS);
+    res.redirect(HTTP_SEE_OTHER, '/login?loggedout=1');
+  });
+}
+
+// One global middleware: same-origin only, no framing, no sniffing, no referrer. HSTS is left out
+// on purpose: the version 1 decision is plain HTTP on the local network, where browsers ignore it.
+function securityHeaders(req, res, next) {
+  res.set('Content-Security-Policy', CSP);
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  res.set('Referrer-Policy', 'no-referrer');
+  next();
+}
+
+function unknownAddress(req, res) {
+  res.status(HTTP_NOT_FOUND).send(unknownPage());
+}
+
+// Logs the detail on the server only; the client gets a fixed sentence.
+// eslint-disable-next-line no-unused-vars
+function errorHandler(err, req, res, next) {
+  const status = err.status >= 400 && err.status < 500 ? err.status : 500;
+  if (status === 500) console.error(err);
+  res.status(status).send(failurePage(status === 500 ? MSG_FAILURE : MSG_BAD_REQUEST));
+}
+
+export function createApp({ db, now = Date.now }) {
+  const app = express();
+  app.disable('x-powered-by');
+  app.use(securityHeaders);
+  app.use(originCheck);
+  app.use(express.urlencoded({ extended: false, limit: BODY_LIMIT }));
+  app.use(cookieParser());
+  app.use(sessionMiddleware(db));
+  authRoutes(app, db, createLoginLimiter(now));
+  taskRoutes(app, db);
+  app.use(unknownAddress);
+  app.use(errorHandler);
+  return app;
+}
+
+function isMainModule() {
+  return process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+}
+
+if (isMainModule()) {
+  const dbPath = process.env.DATABASE_PATH || DEFAULT_DB_PATH;
+  mkdirSync(dirname(dbPath), { recursive: true });
+  const app = createApp({ db: openDb(dbPath) });
+  const port = Number(process.env.PORT) || DEFAULT_PORT;
+  app.listen(port, () => console.log(`Listening on port ${port}`));
+}

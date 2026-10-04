@@ -1,0 +1,119 @@
+{
+  "files_checked": [
+    "README.md",
+    "docs/ARCHITECTURE.md",
+    "docs/progress.md",
+    "tests/acceptance/criteria.test.js",
+    "tests/e2e.test.js"
+  ],
+  "problems": [
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 19,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 36,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 40,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 56,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 61,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 75,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 76,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 106,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": 114,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "security",
+      "severity": "medium",
+      "file": "tests/e2e.test.js",
+      "line": 12,
+      "detail": "hard-coded credential in a test file (a fixture?)",
+      "fix": "A made-up test value is fine. If this is a real secret, move it to an environment variable and rotate it."
+    },
+    {
+      "area": "testing",
+      "severity": "info",
+      "file": "tests/acceptance/criteria.test.js",
+      "line": null,
+      "detail": "protected test changed without weakening (un-skipped or extended)",
+      "fix": "Accepted automatically when the step completes; review the diff."
+    }
+  ],
+  "chain": {
+    "steps": {
+      "build": "not configured",
+      "lint": "passed",
+      "typecheck": "not configured",
+      "test": "passed"
+    },
+    "failed": 0,
+    "failed_steps": [],
+    "ts": 1791136015.3009357
+  },
+  "blocking": false,
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 10,
+    "low": 0,
+    "info": 1
+  },
+  "ts": 1791136015.3022628
+}
