@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   due_date TEXT,
   done INTEGER NOT NULL DEFAULT 0 CHECK (done IN (0, 1)),
   completed_at TEXT,
+  completed_by INTEGER REFERENCES users(id),
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 

@@ -49,7 +49,12 @@ ${ownerOptions(members, values.owner)}
 function taskRow(task, today) {
   const due = task.due_date ? esc(task.due_date) : 'no due date';
   const overdue = task.due_date && task.due_date < today ? ' <strong>overdue</strong>' : '';
-  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due}${overdue} &middot; added by ${esc(task.creator_name)}</li>`;
+  const doneForm = `<form method="post" action="/tasks/${Number(task.id)}/done"><button type="submit">Mark done</button></form>`;
+  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due}${overdue} &middot; added by ${esc(task.creator_name)} ${doneForm}</li>`;
+}
+
+export function notFoundPage() {
+  return page('Not found', '<p>Task not found.</p>\n<p><a href="/">Back to the list</a></p>');
 }
 
 function taskList(tasks, today) {

@@ -27,8 +27,25 @@ describe('acceptance criteria', () => {
     expect(countUsers(db)).toBe(TEAM_SIZE);
   });
 
-  test.skip('C2 [step 5] a task has title, owner and due date and can be marked done', () => {
-    expect.fail(NOT_BUILT);
+  test('C2 [step 5] a task has title, owner and due date and can be marked done', async () => {
+    const db = openDb(':memory:');
+    const app = createApp({ db });
+    const agent = request.agent(app);
+    await agent
+      .post('/register')
+      .type('form')
+      .send({ email: 'ada@example.com', displayName: 'Ada', password: 'a long password' });
+    await agent
+      .post('/tasks')
+      .type('form')
+      .send({ token: 'c2-token-aaaaaaaaaaaa', title: 'Sweep floor', owner: '1', dueDate: '2030-01-31' });
+    const task = db.prepare('SELECT * FROM tasks').get();
+    expect(task).toMatchObject({ title: 'Sweep floor', owner_id: 1, due_date: '2030-01-31', done: 0 });
+    const res = await agent.post(`/tasks/${task.id}/done`);
+    expect(res.status).toBe(303);
+    const done = db.prepare('SELECT * FROM tasks WHERE id = ?').get(task.id);
+    expect(done.done).toBe(1);
+    expect(done.completed_at).not.toBeNull();
   });
 
   test.skip('C3 [step 6] reassigning changes the owner, and the owner is unchanged until then', () => {

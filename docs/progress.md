@@ -13,3 +13,9 @@ Append one entry per completed step. Newest at the bottom. Written by the agent,
 - Files touched: src/tasks.js, src/views.js, tests/tasks-create.test.js; also src/server.js (routes wired, `esc`/`page`/`messages` moved to views.js) and src/schema.sql (new `form_tokens` table); step 3 tests stay green.
 - Tests added: tests/tasks-create.test.js (shared list, creator from session, preselect, validation refusals, escaping, duplicate submit, token expiry, no session).
 - Open questions: empty-state wording is still UNDECIDED (placeholder 'No tasks yet. Add the first one above.'); the answer to a POST with a missing or malformed form token (plain 400 'Bad request.') was not decided; open tasks are listed in creation order until step 7 sets the order.
+
+## 2026-10-04, Step 5: Mark done and reopen
+- What was done: `POST /tasks/:id/done` and `POST /tasks/:id/reopen` set the state (not a toggle) inside one immediate transaction and send the member back to `/` with 303. Marking done records `completed_at` and `completed_by`; a second mark-done keeps the first values. Reopen clears both. Unknown or malformed id: 404 'Task not found.' with a link to the list. Open rows have a 'Mark done' button.
+- Files touched: src/tasks.js, src/views.js, tests/tasks-done.test.js, tests/acceptance/criteria.test.js (C2 un-skipped); also src/schema.sql (new `tasks.completed_by` column) and src/db.js (`applySchema` adds the column to an existing database file); step 2 to 4 tests stay green.
+- Tests added: tests/tasks-done.test.js (done, double submit, reopen, 404, no session, foreign Origin); C2.
+- Open questions: the 'Reopen' button has no place on the page until step 7 adds the Done section; the route and tests exist now.

@@ -1,9 +1,10 @@
 import { randomBytes } from 'node:crypto';
-import { createTask, findUserById } from './db.js';
+import { createTask, findTask, findUserById } from './db.js';
 import { requireLogin } from './auth.js';
-import { TITLE_MAX, taskListPage } from './views.js';
+import { TITLE_MAX, notFoundPage, taskListPage } from './views.js';
 
 const HTTP_BAD_REQUEST = 400;
+const HTTP_NOT_FOUND = 404;
 const HTTP_SEE_OTHER = 303;
 const TOKEN_BYTES = 16;
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
@@ -89,6 +90,37 @@ export function addTaskOnce(db, { token, title, ownerId, createdBy, dueDate }) {
   return run.immediate();
 }
 
+const NOW_SQL = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
+
+// Sets the state rather than toggling it. Marking done an already done task changes nothing,
+// so the first completed_at and completed_by stay. Returns false when the task does not exist.
+export function markDone(db, id, userId) {
+  const run = db.transaction(() => {
+    db.prepare(
+      `UPDATE tasks SET done = 1, completed_at = ${NOW_SQL}, completed_by = ? WHERE id = ? AND done = 0`,
+    ).run(userId, id);
+    return findTask(db, id) !== undefined;
+  });
+  return run.immediate();
+}
+
+// Reopening an already open task changes nothing. Returns false when the task does not exist.
+export function reopenTask(db, id) {
+  const run = db.transaction(() => {
+    db.prepare('UPDATE tasks SET done = 0, completed_at = NULL, completed_by = NULL WHERE id = ? AND done = 1').run(id);
+    return findTask(db, id) !== undefined;
+  });
+  return run.immediate();
+}
+
+function changeState(db, change) {
+  return (req, res) => {
+    const found = ID_PATTERN.test(req.params.id) && change(Number(req.params.id), req.user.id);
+    if (!found) return res.status(HTTP_NOT_FOUND).send(notFoundPage());
+    return res.redirect(HTTP_SEE_OTHER, '/');
+  };
+}
+
 function renderList(db, req, { errors = [], values = {}, status = 200 } = {}, res) {
   const form = { title: '', dueDate: '', ...values, owner: values.owner ?? req.user.id };
   const token = randomBytes(TOKEN_BYTES).toString('base64url');
@@ -125,4 +157,7 @@ export function taskRoutes(app, db) {
     });
     return res.redirect(HTTP_SEE_OTHER, '/');
   });
+
+  app.post('/tasks/:id/done', requireLogin, changeState(db, (id, userId) => markDone(db, id, userId)));
+  app.post('/tasks/:id/reopen', requireLogin, changeState(db, (id) => reopenTask(db, id)));
 }

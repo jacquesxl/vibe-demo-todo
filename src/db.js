@@ -13,6 +13,14 @@ export function openDb(path) {
 
 export function applySchema(db) {
   db.exec(readFileSync(SCHEMA_PATH, 'utf8'));
+  addCompletedByColumn(db);
+}
+
+// Step 5 added tasks.completed_by; a database file made by an earlier step does not have it yet.
+function addCompletedByColumn(db) {
+  const columns = db.prepare("SELECT name FROM pragma_table_info('tasks')").all();
+  if (columns.some((c) => c.name === 'completed_by')) return;
+  db.exec('ALTER TABLE tasks ADD COLUMN completed_by INTEGER REFERENCES users(id)');
 }
 
 export function createUser(db, { email, displayName, passwordHash }) {
