@@ -46,20 +46,26 @@ ${ownerOptions(members, values.owner)}
 </form>`;
 }
 
-function taskRow(task, today) {
+function reassignForm(task, members) {
+  return `<form method="post" action="/tasks/${Number(task.id)}/owner"><select name="owner" aria-label="New owner">
+${ownerOptions(members, task.owner_id)}
+</select> <button type="submit">Reassign</button></form>`;
+}
+
+function taskRow(task, today, members) {
   const due = task.due_date ? esc(task.due_date) : 'no due date';
   const overdue = task.due_date && task.due_date < today ? ' <strong>overdue</strong>' : '';
   const doneForm = `<form method="post" action="/tasks/${Number(task.id)}/done"><button type="submit">Mark done</button></form>`;
-  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due}${overdue} &middot; added by ${esc(task.creator_name)} ${doneForm}</li>`;
+  return `<li>${esc(task.title)} &middot; ${esc(task.owner_name)} &middot; ${due}${overdue} &middot; added by ${esc(task.creator_name)} ${reassignForm(task, members)} ${doneForm}</li>`;
 }
 
 export function notFoundPage() {
   return page('Not found', '<p>Task not found.</p>\n<p><a href="/">Back to the list</a></p>');
 }
 
-function taskList(tasks, today) {
+function taskList(tasks, today, members) {
   if (tasks.length === 0) return `<p>${esc(MSG_EMPTY_LIST)}</p>`;
-  return `<ul>\n${tasks.map((task) => taskRow(task, today)).join('\n')}\n</ul>`;
+  return `<ul>\n${tasks.map((task) => taskRow(task, today, members)).join('\n')}\n</ul>`;
 }
 
 export function taskListPage({ user, members, tasks, today, token, errors = [], values }) {
@@ -69,6 +75,6 @@ export function taskListPage({ user, members, tasks, today, token, errors = [], 
 <form method="post" action="/logout"><button type="submit">Log out</button></form>
 ${messages(errors)}
 ${addForm({ members, values, token })}
-${taskList(tasks, today)}`,
+${taskList(tasks, today, members)}`,
   );
 }

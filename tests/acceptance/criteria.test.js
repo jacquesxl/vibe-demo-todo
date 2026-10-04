@@ -48,8 +48,24 @@ describe('acceptance criteria', () => {
     expect(done.completed_at).not.toBeNull();
   });
 
-  test.skip('C3 [step 6] reassigning changes the owner, and the owner is unchanged until then', () => {
-    expect.fail(NOT_BUILT);
+  test('C3 [step 6] reassigning changes the owner, and the owner is unchanged until then', async () => {
+    const db = openDb(':memory:');
+    const app = createApp({ db });
+    const agent = request.agent(app);
+    for (const [email, displayName] of [['ada@example.com', 'Ada'], ['sam@example.com', 'Sam']]) {
+      await agent.post('/logout');
+      await agent.post('/register').type('form').send({ email, displayName, password: 'a long password' });
+    }
+    await agent
+      .post('/tasks')
+      .type('form')
+      .send({ token: 'c3-token-aaaaaaaaaaaa', title: 'Sweep floor', owner: '1', dueDate: '2030-01-31' });
+    const id = db.prepare('SELECT id FROM tasks').get().id;
+    await agent.get('/');
+    expect(db.prepare('SELECT owner_id FROM tasks WHERE id = ?').get(id).owner_id).toBe(1);
+    const res = await agent.post(`/tasks/${id}/owner`).type('form').send({ owner: '2' });
+    expect(res.status).toBe(303);
+    expect(db.prepare('SELECT owner_id FROM tasks WHERE id = ?').get(id).owner_id).toBe(2);
   });
 
   test.skip('C4 [step 8] done tasks are listed apart from open ones, newest first, can be reopened, and only the creator can delete', () => {

@@ -52,7 +52,7 @@ export function listMembers(db) {
 export function listOpenTasks(db) {
   return db
     .prepare(
-      `SELECT t.id, t.title, t.due_date, o.display_name AS owner_name, c.display_name AS creator_name
+      `SELECT t.id, t.title, t.owner_id, t.due_date, o.display_name AS owner_name, c.display_name AS creator_name
        FROM tasks t
        JOIN users o ON o.id = t.owner_id
        JOIN users c ON c.id = t.created_by
@@ -113,6 +113,15 @@ export function reopenTask(db, id) {
   return run.immediate();
 }
 
+// Changes only owner_id. Returns false when the task does not exist.
+export function reassignTask(db, id, ownerId) {
+  const run = db.transaction(() => {
+    db.prepare('UPDATE tasks SET owner_id = ? WHERE id = ?').run(ownerId, id);
+    return findTask(db, id) !== undefined;
+  });
+  return run.immediate();
+}
+
 function changeState(db, change) {
   return (req, res) => {
     const found = ID_PATTERN.test(req.params.id) && change(Number(req.params.id), req.user.id);
@@ -155,6 +164,19 @@ export function taskRoutes(app, db) {
       createdBy: req.user.id,
       dueDate: values.dueDate,
     });
+    return res.redirect(HTTP_SEE_OTHER, '/');
+  });
+
+  app.post('/tasks/:id/owner', requireLogin, (req, res) => {
+    if (!ID_PATTERN.test(req.params.id) || !findTask(db, Number(req.params.id))) {
+      return res.status(HTTP_NOT_FOUND).send(notFoundPage());
+    }
+    const ownerText = typeof req.body?.owner === 'string' ? req.body.owner.trim() : '';
+    const ownerId = ID_PATTERN.test(ownerText) && findUserById(db, Number(ownerText)) ? Number(ownerText) : null;
+    if (ownerId === null) {
+      return renderList(db, req, { errors: [MSG_OWNER], status: HTTP_BAD_REQUEST }, res);
+    }
+    if (!reassignTask(db, Number(req.params.id), ownerId)) return res.status(HTTP_NOT_FOUND).send(notFoundPage());
     return res.redirect(HTTP_SEE_OTHER, '/');
   });
 
