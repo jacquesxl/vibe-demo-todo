@@ -52,29 +52,28 @@ export function listMembers(db) {
 }
 
 // Open tasks: soonest due date first, no due date last, ties oldest first.
-const OPEN_ORDER_SQL = 'ORDER BY t.due_date IS NULL, t.due_date, t.created_at, t.id';
-// The one place that orders done tasks: newest completion first (the founder has not settled this yet).
-const DONE_ORDER_SQL = 'ORDER BY t.completed_at DESC, t.id DESC';
+const OPEN_TASKS_SQL = `SELECT t.id, t.title, t.owner_id, t.created_by, t.due_date, t.completed_at,
+  o.display_name AS owner_name, c.display_name AS creator_name, d.display_name AS completer_name
+  FROM tasks t
+  JOIN users o ON o.id = t.owner_id
+  JOIN users c ON c.id = t.created_by
+  LEFT JOIN users d ON d.id = t.completed_by
+  WHERE t.done = 0
+  ORDER BY t.due_date IS NULL, t.due_date, t.created_at, t.id`;
 
-const TASK_COLUMNS = `t.id, t.title, t.owner_id, t.created_by, t.due_date, t.completed_at,
-  o.display_name AS owner_name, c.display_name AS creator_name, d.display_name AS completer_name`;
-
-function listTasks(db, done, orderSql) {
-  return db
-    .prepare(
-      `SELECT ${TASK_COLUMNS}
-       FROM tasks t
-       JOIN users o ON o.id = t.owner_id
-       JOIN users c ON c.id = t.created_by
-       LEFT JOIN users d ON d.id = t.completed_by
-       WHERE t.done = ?
-       ${orderSql}`,
-    )
-    .all(done);
-}
+// Done tasks. The ORDER BY here is the one place that orders them: newest completion first
+// (the founder has not settled this yet).
+const DONE_TASKS_SQL = `SELECT t.id, t.title, t.owner_id, t.created_by, t.due_date, t.completed_at,
+  o.display_name AS owner_name, c.display_name AS creator_name, d.display_name AS completer_name
+  FROM tasks t
+  JOIN users o ON o.id = t.owner_id
+  JOIN users c ON c.id = t.created_by
+  LEFT JOIN users d ON d.id = t.completed_by
+  WHERE t.done = 1
+  ORDER BY t.completed_at DESC, t.id DESC`;
 
 export function listOpenTasks(db) {
-  return listTasks(db, 0, OPEN_ORDER_SQL);
+  return db.prepare(OPEN_TASKS_SQL).all();
 }
 
 // completed_at is stored in UTC; the label is the server's local time as YYYY-MM-DD HH:MM.
@@ -84,7 +83,7 @@ function localDateTime(iso) {
 }
 
 export function listDoneTasks(db) {
-  return listTasks(db, 1, DONE_ORDER_SQL).map((t) => ({
+  return db.prepare(DONE_TASKS_SQL).all().map((t) => ({
     ...t,
     done_label: t.completed_at ? localDateTime(t.completed_at) : null,
   }));
@@ -118,14 +117,13 @@ export function addTaskOnce(db, { token, title, ownerId, createdBy, dueDate }) {
   return run.immediate();
 }
 
-const NOW_SQL = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
-
 // Sets the state rather than toggling it. Marking done an already done task changes nothing,
 // so the first completed_at and completed_by stay. Returns false when the task does not exist.
 export function markDone(db, id, userId) {
   const run = db.transaction(() => {
     db.prepare(
-      `UPDATE tasks SET done = 1, completed_at = ${NOW_SQL}, completed_by = ? WHERE id = ? AND done = 0`,
+      `UPDATE tasks SET done = 1, completed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), completed_by = ?
+       WHERE id = ? AND done = 0`,
     ).run(userId, id);
     return findTask(db, id) !== undefined;
   });
